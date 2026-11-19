@@ -1,0 +1,193 @@
+{
+  "name": "Telegram AI image bot with Nano Banana Pro (MegaBrain)",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "# Telegram image bot — Nano Banana Pro\nSend the bot a description, get back a 2K image made by Google **Nano Banana Pro** through the MegaBrain API ($0.17 an image, pay as you go).\n\n## Setup (2 minutes)\n1. Get a key at [getmegabrain.com/keys](https://getmegabrain.com/keys).\n2. In n8n create a **Header Auth** credential named `MegaBrain API key`:\n   - Name: `Authorization`\n   - Value: `Bearer YOUR_KEY`\n3. Pick it in every HTTP Request node with the 🔑 mark.\n\nFailed jobs are refunded automatically. Prices: [getmegabrain.com/docs/media](https://getmegabrain.com/docs/media).\n\nAlso create a **Telegram** credential with your bot token from @BotFather.",
+        "height": 560,
+        "width": 440
+      },
+      "id": "2224071b-d49f-513e-9789-1ef963c8e7b2",
+      "name": "About",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -520,
+        -260
+      ]
+    },
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {}
+      },
+      "id": "bf1115d4-eeb5-5a8f-814a-f1a13b9bf762",
+      "name": "Telegram Trigger",
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "webhookId": "c7dfc853-49dc-5c16-b19a-742b03ccd9f0",
+      "credentials": {
+        "telegramApi": {
+          "id": "tgBotCredential01",
+          "name": "Telegram bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "sendChatAction",
+        "chatId": "={{ $json.message.chat.id }}",
+        "action": "upload_photo"
+      },
+      "id": "6d20a979-ba7c-5cfb-905d-fb8501b5b726",
+      "name": "Show 'sending photo'",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        220,
+        0
+      ],
+      "webhookId": "7193e9b7-08ef-5ee4-a6a3-bb8b1b578ed9",
+      "credentials": {
+        "telegramApi": {
+          "id": "tgBotCredential01",
+          "name": "Telegram bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://getmegabrain.com/api/gateway/v1/images/generations",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ model: 'nano-banana-pro', prompt: $('Telegram Trigger').item.json.message.text, aspect_ratio: '1:1', resolution: '2K' }) }}",
+        "options": {
+          "timeout": 120000
+        },
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth"
+      },
+      "id": "18d38837-2f85-56d7-bace-b5f9d1ecdb46",
+      "name": "Generate image (Nano Banana Pro)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        440,
+        0
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "mbHeaderAuth0001",
+          "name": "MegaBrain API key"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "operation": "sendPhoto",
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "file": "={{ $json.data[0].url }}",
+        "additionalFields": {
+          "caption": "Made with Nano Banana Pro on getmegabrain.com"
+        }
+      },
+      "id": "d19729a2-c95c-5183-80a0-4c0e25c996d8",
+      "name": "Send photo",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        700,
+        -100
+      ],
+      "webhookId": "a337eea7-16f6-5178-91a2-4c8b464d2f37",
+      "credentials": {
+        "telegramApi": {
+          "id": "tgBotCredential01",
+          "name": "Telegram bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "text": "=Could not make the image: {{ $json.error?.message || 'unknown error' }}",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "id": "4842e927-fbc7-51f1-825a-c33e15568e33",
+      "name": "Tell the user it failed",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        700,
+        100
+      ],
+      "webhookId": "f064e378-94fb-53c3-a3cc-ee0ca900d3f5",
+      "credentials": {
+        "telegramApi": {
+          "id": "tgBotCredential01",
+          "name": "Telegram bot"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "Show 'sending photo'",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Show 'sending photo'": {
+      "main": [
+        [
+          {
+            "node": "Generate image (Nano Banana Pro)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate image (Nano Banana Pro)": {
+      "main": [
+        [
+          {
+            "node": "Send photo",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Tell the user it failed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "tags": []
+}

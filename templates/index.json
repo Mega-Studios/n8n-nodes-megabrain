@@ -1,0 +1,27 @@
+[
+  {
+    "file": "telegram-image-bot-nano-banana-pro.json",
+    "name": "Telegram AI image bot with Nano Banana Pro (MegaBrain)",
+    "description": "Telegram bot that turns any message into a 2K Nano Banana Pro image via the MegaBrain API, with a friendly reply when generation fails."
+  },
+  {
+    "file": "text-to-video-kling-3.json",
+    "name": "Generate AI videos with Kling 3 from a form (MegaBrain)",
+    "description": "A form that turns a one-line idea into a Kling 3 video: a free LLM writes the prompt, the MegaBrain queue renders the clip, and a wait/poll loop returns the video URL."
+  },
+  {
+    "file": "instagram-carousel-flux-2.json",
+    "name": "Instagram carousel images and caption with FLUX 2 (MegaBrain)",
+    "description": "Plans an Instagram carousel with a free LLM, draws each slide with FLUX 2 at 1080×1350 through the MegaBrain API, and returns the slide URLs with a ready caption."
+  },
+  {
+    "file": "product-photo-to-video-ad.json",
+    "name": "Product photo to video ad with Nano Banana Pro and Kling 3 (MegaBrain)",
+    "description": "UGC-style ad from one product photo: a free LLM writes the scene, Nano Banana Pro Edit makes a lifestyle shot that keeps the label, and Kling 3 animates it into a vertical clip."
+  },
+  {
+    "file": "ai-agent-any-model.json",
+    "name": "AI agent on 100+ models with one key (MegaBrain, OpenAI-compatible)",
+    "description": "A chat AI agent whose OpenAI Chat Model node points at MegaBrain: one key for Claude, GPT, Gemini, Kimi, GLM and more, and a free model to start."
+  }
+]

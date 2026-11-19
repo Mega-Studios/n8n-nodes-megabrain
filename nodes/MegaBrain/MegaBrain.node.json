@@ -1,0 +1,19 @@
+{
+	"node": "n8n-nodes-megabrain.megaBrain",
+	"nodeVersion": "1.0",
+	"codexVersion": "1.0",
+	"categories": ["Marketing & Content", "Productivity"],
+	"alias": ["image", "video", "kling", "nano banana", "flux", "seedance", "llm", "chat"],
+	"resources": {
+		"credentialDocumentation": [
+			{
+				"url": "https://getmegabrain.com/docs/n8n#credentials"
+			}
+		],
+		"primaryDocumentation": [
+			{
+				"url": "https://getmegabrain.com/docs/n8n"
+			}
+		]
+	}
+}

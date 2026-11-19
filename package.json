@@ -1,0 +1,60 @@
+{
+	"name": "n8n-nodes-megabrain",
+	"version": "0.1.0",
+	"description": "n8n node for MegaBrain: generate images (Nano Banana Pro, FLUX 2, Seedream) and videos (Kling 3, Seedance) and chat with 100+ text models through one pay-as-you-go API key.",
+	"license": "MIT",
+	"homepage": "https://getmegabrain.com/docs/n8n",
+	"keywords": [
+		"n8n-community-node-package",
+		"n8n",
+		"megabrain",
+		"ai",
+		"image generation",
+		"video generation",
+		"kling",
+		"nano banana",
+		"flux",
+		"seedance",
+		"llm"
+	],
+	"author": {
+		"name": "MegaBrain",
+		"email": "team@getmegabrain.com"
+	},
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/Mega-Studios/n8n-nodes-megabrain.git"
+	},
+	"scripts": {
+		"build": "n8n-node build",
+		"build:watch": "tsc --watch",
+		"dev": "n8n-node dev",
+		"lint": "n8n-node lint",
+		"lint:fix": "n8n-node lint --fix",
+		"release": "n8n-node release",
+		"prepublishOnly": "n8n-node prerelease"
+	},
+	"files": [
+		"dist"
+	],
+	"n8n": {
+		"n8nNodesApiVersion": 1,
+		"strict": true,
+		"credentials": [
+			"dist/credentials/MegaBrainApi.credentials.js"
+		],
+		"nodes": [
+			"dist/nodes/MegaBrain/MegaBrain.node.js"
+		]
+	},
+	"devDependencies": {
+		"@n8n/node-cli": "0.57.4",
+		"eslint": "9.32.0",
+		"prettier": "3.6.2",
+		"release-it": "^21.1.0",
+		"typescript": "5.9.2"
+	},
+	"peerDependencies": {
+		"n8n-workflow": "*"
+	}
+}

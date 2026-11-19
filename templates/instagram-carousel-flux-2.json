@@ -1,0 +1,215 @@
+{
+  "name": "Instagram carousel images and caption with FLUX 2 (MegaBrain)",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "# Instagram carousel — FLUX 2\nGive a topic. A free text model plans the slides and writes the caption, **FLUX 2** draws every slide in 4:5, and the last node returns the image URLs plus the caption, ready for Instagram, Blotato or Drive.\n\nFLUX 2 costs $0.014 per megapixel: a 5-slide carousel is about $0.14.\n\n## Setup (2 minutes)\n1. Get a key at [getmegabrain.com/keys](https://getmegabrain.com/keys).\n2. In n8n create a **Header Auth** credential named `MegaBrain API key`:\n   - Name: `Authorization`\n   - Value: `Bearer YOUR_KEY`\n3. Pick it in every HTTP Request node with the 🔑 mark.\n\nFailed jobs are refunded automatically. Prices: [getmegabrain.com/docs/media](https://getmegabrain.com/docs/media).",
+        "height": 560,
+        "width": 440
+      },
+      "id": "b769ff21-4931-5961-922c-4431ff525380",
+      "name": "About",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -520,
+        -280
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "fd996a8c-c853-54d8-a4a4-e690053f16ff",
+      "name": "Start",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "72a58ad5-d4c0-5f4d-ba0f-32842161a72b",
+              "name": "topic",
+              "value": "5 morning habits of calm people",
+              "type": "string"
+            },
+            {
+              "id": "8ea1dee4-78c4-557b-a4a3-0ce118770595",
+              "name": "slides",
+              "value": 5,
+              "type": "number"
+            },
+            {
+              "id": "22ac117f-9433-5589-8fbd-cb41d00b1d02",
+              "name": "style",
+              "value": "soft pastel editorial photography, natural light, lots of empty space for text",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "24b8e88f-b107-56dc-a9da-a0009c59a53e",
+      "name": "Topic",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        200,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://getmegabrain.com/api/gateway/v1/chat/completions",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ model: 'mb-auto/free', response_format: { type: 'json_object' }, messages: [ { role: 'system', content: 'You plan Instagram carousels. Reply with JSON only: {\"caption\": string with hashtags, \"slides\": [{\"title\": short slide headline, \"prompt\": image prompt without any text in the picture}]}' }, { role: 'user', content: `Topic: ${$json.topic}. Slides: ${$json.slides}. Visual style: ${$json.style}` } ] }) }}",
+        "options": {
+          "timeout": 120000
+        },
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth"
+      },
+      "id": "7f651f11-b941-578b-99c7-b986361b49eb",
+      "name": "Plan slides (free model)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        420,
+        0
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "mbHeaderAuth0001",
+          "name": "MegaBrain API key"
+        }
+      },
+      "retryOnFail": true,
+      "waitBetweenTries": 3000
+    },
+    {
+      "parameters": {
+        "jsCode": "const raw = $input.first().json.choices[0].message.content;\nconst text = raw.replace(/^```(?:json)?\\s*/i, '').replace(/```\\s*$/, '').trim();\nconst plan = JSON.parse(text);\nconst { style, slides } = $('Topic').first().json;\nreturn plan.slides.slice(0, slides).map((slide, index) => ({\n  json: { index: index + 1, title: slide.title, prompt: `${slide.prompt}. ${style}`, caption: plan.caption },\n}));"
+      },
+      "id": "f022780d-4e4b-538d-b69b-fe93cf66306a",
+      "name": "Parse the plan",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        640,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://getmegabrain.com/api/gateway/v1/images/generations",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ model: 'flux-2', prompt: $json.prompt, image_size: { width: 1080, height: 1350 } }) }}",
+        "options": {
+          "timeout": 120000
+        },
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth"
+      },
+      "id": "e0513468-3f79-5899-9f9d-f54f6ebc9a9c",
+      "name": "Draw slide (FLUX 2)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        860,
+        0
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "mbHeaderAuth0001",
+          "name": "MegaBrain API key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const slides = $('Parse the plan').all();\nconst images = $input.all().map((item, i) => ({\n  slide: slides[i].json.index,\n  title: slides[i].json.title,\n  url: item.json.data[0].url,\n}));\nreturn [{ json: { caption: slides[0].json.caption, images } }];"
+      },
+      "id": "ada737ca-ba8c-5e75-af84-6b1c853d12d9",
+      "name": "Carousel",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1080,
+        0
+      ]
+    }
+  ],
+  "connections": {
+    "Start": {
+      "main": [
+        [
+          {
+            "node": "Topic",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Topic": {
+      "main": [
+        [
+          {
+            "node": "Plan slides (free model)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Plan slides (free model)": {
+      "main": [
+        [
+          {
+            "node": "Parse the plan",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse the plan": {
+      "main": [
+        [
+          {
+            "node": "Draw slide (FLUX 2)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Draw slide (FLUX 2)": {
+      "main": [
+        [
+          {
+            "node": "Carousel",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "tags": []
+}
