@@ -83,12 +83,6 @@
         420,
         0
       ],
-      "credentials": {
-        "httpHeaderAuth": {
-          "id": "mbHeaderAuth0001",
-          "name": "MegaBrain API key"
-        }
-      },
       "retryOnFail": true,
       "waitBetweenTries": 3000
     },
@@ -138,13 +132,7 @@
       "position": [
         1080,
         100
-      ],
-      "credentials": {
-        "httpHeaderAuth": {
-          "id": "mbHeaderAuth0001",
-          "name": "MegaBrain API key"
-        }
-      }
+      ]
     },
     {
       "parameters": {
@@ -246,13 +234,7 @@
       "position": [
         1740,
         220
-      ],
-      "credentials": {
-        "httpHeaderAuth": {
-          "id": "mbHeaderAuth0001",
-          "name": "MegaBrain API key"
-        }
-      }
+      ]
     },
     {
       "parameters": {
@@ -293,6 +275,38 @@
       "position": [
         1740,
         0
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## 1. Plan\nEdit **Topic**: subject, number of slides, visual style. The free model returns JSON with a caption and one image prompt per slide; **Parse the plan** strips code fences and keeps the slide count.",
+        "height": 220,
+        "width": 440,
+        "color": 5
+      },
+      "id": "84a0c881-f284-54bc-86f7-ef94c8df68af",
+      "name": "Note: plan",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        160,
+        -260
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## 2. Draw slides one by one\nEach slide goes through FLUX 2 at 1080×1350. If an image is not ready in ~110 s the loop polls `response_url`. When all slides are done, **Carousel** returns the caption and the URLs.",
+        "height": 200,
+        "width": 520,
+        "color": 5
+      },
+      "id": "f3e8925c-5fa6-571f-8335-2d37e738ced5",
+      "name": "Note: draw",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1040,
+        -300
       ]
     }
   ],

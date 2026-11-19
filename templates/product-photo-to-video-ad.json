@@ -71,12 +71,6 @@
         220,
         0
       ],
-      "credentials": {
-        "httpHeaderAuth": {
-          "id": "mbHeaderAuth0001",
-          "name": "MegaBrain API key"
-        }
-      },
       "retryOnFail": true,
       "waitBetweenTries": 3000
     },
@@ -113,13 +107,7 @@
       "position": [
         660,
         0
-      ],
-      "credentials": {
-        "httpHeaderAuth": {
-          "id": "mbHeaderAuth0001",
-          "name": "MegaBrain API key"
-        }
-      }
+      ]
     },
     {
       "parameters": {
@@ -141,13 +129,7 @@
       "position": [
         1320,
         -100
-      ],
-      "credentials": {
-        "httpHeaderAuth": {
-          "id": "mbHeaderAuth0001",
-          "name": "MegaBrain API key"
-        }
-      }
+      ]
     },
     {
       "parameters": {
@@ -265,13 +247,7 @@
       "position": [
         1320,
         120
-      ],
-      "credentials": {
-        "httpHeaderAuth": {
-          "id": "mbHeaderAuth0001",
-          "name": "MegaBrain API key"
-        }
-      }
+      ]
     },
     {
       "parameters": {
@@ -303,13 +279,7 @@
       "position": [
         1760,
         -100
-      ],
-      "credentials": {
-        "httpHeaderAuth": {
-          "id": "mbHeaderAuth0001",
-          "name": "MegaBrain API key"
-        }
-      }
+      ]
     },
     {
       "parameters": {
@@ -393,13 +363,7 @@
       "position": [
         2240,
         -220
-      ],
-      "credentials": {
-        "httpHeaderAuth": {
-          "id": "mbHeaderAuth0001",
-          "name": "MegaBrain API key"
-        }
-      }
+      ]
     },
     {
       "parameters": {
@@ -429,6 +393,38 @@
         -220
       ],
       "webhookId": "04e2eba3-66b8-5d1b-af9a-049c1dce56b6"
+    },
+    {
+      "parameters": {
+        "content": "## 1. Scene\nThe free model writes two prompts as JSON: the lifestyle shot and a 5-second action. The photo URL must be public (no login, no Google Drive preview links).",
+        "height": 220,
+        "width": 420,
+        "color": 5
+      },
+      "id": "0a763695-2414-56cd-98c0-2211c8e0e267",
+      "name": "Note: scene",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        160,
+        -300
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## 2. Shot, then video\n**Nano Banana Pro Edit** keeps the product and label from the photo. The shot feeds **Kling 3 image-to-video**; the loop polls the job every 15 s and the form shows both links.",
+        "height": 200,
+        "width": 560,
+        "color": 5
+      },
+      "id": "23a775d4-b762-5117-9b46-6deb67ebf5f3",
+      "name": "Note: shot and video",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        840,
+        -420
+      ]
     }
   ],
   "connections": {

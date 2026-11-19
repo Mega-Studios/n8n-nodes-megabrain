@@ -61,13 +61,7 @@
       "position": [
         160,
         220
-      ],
-      "credentials": {
-        "openAiApi": {
-          "id": "mbOpenAiCompat01",
-          "name": "MegaBrain (OpenAI-compatible)"
-        }
-      }
+      ]
     },
     {
       "parameters": {},

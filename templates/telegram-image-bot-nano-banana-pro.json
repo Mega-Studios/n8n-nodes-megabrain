@@ -31,13 +31,49 @@
         0,
         0
       ],
-      "webhookId": "c7dfc853-49dc-5c16-b19a-742b03ccd9f0",
-      "credentials": {
-        "telegramApi": {
-          "id": "tgBotCredential01",
-          "name": "Telegram bot"
-        }
-      }
+      "webhookId": "c7dfc853-49dc-5c16-b19a-742b03ccd9f0"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "979f49a5-1591-57e3-af48-13f994efdc24",
+              "name": "model",
+              "value": "nano-banana-pro",
+              "type": "string"
+            },
+            {
+              "id": "64b8170a-987d-5e7b-9696-c0d42b837cdc",
+              "name": "aspect_ratio",
+              "value": "1:1",
+              "type": "string"
+            },
+            {
+              "id": "ef3c3395-1ab8-533f-ae32-177a59bbc73d",
+              "name": "resolution",
+              "value": "2K",
+              "type": "string"
+            },
+            {
+              "id": "03e23462-2a63-5e48-a833-4ccd6d82640e",
+              "name": "caption",
+              "value": "Made with Nano Banana Pro on getmegabrain.com",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "595b8b3b-0cae-541f-becd-99047917a50a",
+      "name": "Settings",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        200,
+        0
+      ]
     },
     {
       "parameters": {
@@ -50,16 +86,10 @@
       "type": "n8n-nodes-base.telegram",
       "typeVersion": 1.2,
       "position": [
-        220,
+        420,
         0
       ],
-      "webhookId": "7193e9b7-08ef-5ee4-a6a3-bb8b1b578ed9",
-      "credentials": {
-        "telegramApi": {
-          "id": "tgBotCredential01",
-          "name": "Telegram bot"
-        }
-      }
+      "webhookId": "7193e9b7-08ef-5ee4-a6a3-bb8b1b578ed9"
     },
     {
       "parameters": {
@@ -67,7 +97,7 @@
         "url": "https://getmegabrain.com/api/gateway/v1/images/generations",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ model: 'nano-banana-pro', prompt: $('Telegram Trigger').item.json.message.text, aspect_ratio: '1:1', resolution: '2K', output_format: 'jpeg' }) }}",
+        "jsonBody": "={{ JSON.stringify({ model: $('Settings').item.json.model, prompt: $('Telegram Trigger').item.json.message.text, aspect_ratio: $('Settings').item.json.aspect_ratio, resolution: $('Settings').item.json.resolution, output_format: 'jpeg' }) }}",
         "options": {
           "timeout": 120000
         },
@@ -79,15 +109,9 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        440,
+        640,
         0
       ],
-      "credentials": {
-        "httpHeaderAuth": {
-          "id": "mbHeaderAuth0001",
-          "name": "MegaBrain API key"
-        }
-      },
       "onError": "continueErrorOutput"
     },
     {
@@ -96,7 +120,7 @@
         "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
         "file": "={{ $json.image_url }}",
         "additionalFields": {
-          "caption": "Made with Nano Banana Pro on getmegabrain.com"
+          "caption": "={{ $('Settings').item.json.caption }}"
         }
       },
       "id": "d19729a2-c95c-5183-80a0-4c0e25c996d8",
@@ -104,16 +128,10 @@
       "type": "n8n-nodes-base.telegram",
       "typeVersion": 1.2,
       "position": [
-        1140,
+        1340,
         -100
       ],
-      "webhookId": "a337eea7-16f6-5178-91a2-4c8b464d2f37",
-      "credentials": {
-        "telegramApi": {
-          "id": "tgBotCredential01",
-          "name": "Telegram bot"
-        }
-      }
+      "webhookId": "a337eea7-16f6-5178-91a2-4c8b464d2f37"
     },
     {
       "parameters": {
@@ -128,16 +146,10 @@
       "type": "n8n-nodes-base.telegram",
       "typeVersion": 1.2,
       "position": [
-        1140,
+        1340,
         260
       ],
-      "webhookId": "f064e378-94fb-53c3-a3cc-ee0ca900d3f5",
-      "credentials": {
-        "telegramApi": {
-          "id": "tgBotCredential01",
-          "name": "Telegram bot"
-        }
-      }
+      "webhookId": "f064e378-94fb-53c3-a3cc-ee0ca900d3f5"
     },
     {
       "parameters": {
@@ -169,7 +181,7 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        660,
+        860,
         0
       ]
     },
@@ -192,7 +204,7 @@
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        880,
+        1080,
         -100
       ]
     },
@@ -205,7 +217,7 @@
       "type": "n8n-nodes-base.wait",
       "typeVersion": 1.1,
       "position": [
-        880,
+        1080,
         120
       ],
       "webhookId": "9c030a1e-766c-5a85-a23f-0cc442644072"
@@ -224,30 +236,45 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        1100,
+        1300,
         120
       ],
-      "credentials": {
-        "httpHeaderAuth": {
-          "id": "mbHeaderAuth0001",
-          "name": "MegaBrain API key"
-        }
-      },
       "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "content": "## 1. Settings\nChange the model, frame and caption here. `resolution` 4K costs twice as much; for cheaper drafts use `nano-banana-2` or `flux-2` (FLUX takes no `resolution`: remove it from the request).",
+        "height": 220,
+        "width": 420,
+        "color": 5
+      },
+      "id": "97b7c95c-ff7c-5314-b89b-961165d09dc1",
+      "name": "Note: settings",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        140,
+        -260
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## 2. Wait for a queued image\nThe API waits up to ~110 s. A slower image comes back as `202` with a `response_url`: the loop waits 10 s and asks again until the image is ready. A failed job is refunded and the user gets the reason.",
+        "height": 220,
+        "width": 460,
+        "color": 5
+      },
+      "id": "8c3d5ffb-3957-5f37-886d-c799e0a3245b",
+      "name": "Note: queue",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        820,
+        -260
+      ]
     }
   ],
   "connections": {
-    "Telegram Trigger": {
-      "main": [
-        [
-          {
-            "node": "Show 'sending photo'",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
     "Show 'sending photo'": {
       "main": [
         [
@@ -318,6 +345,28 @@
         [
           {
             "node": "Tell the user it failed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "Settings",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Settings": {
+      "main": [
+        [
+          {
+            "node": "Show 'sending photo'",
             "type": "main",
             "index": 0
           }

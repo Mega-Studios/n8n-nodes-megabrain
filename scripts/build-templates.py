@@ -31,6 +31,9 @@ class WF:
             "typeVersion": version,
             "position": list(pos),
         }
+        # Published templates carry no credential ids or names (n8n.io submission
+        # guidelines): the setup note says which credential each node needs.
+        extra.pop("credentials", None)
         node.update(extra)
         self.nodes.append(node)
         return name
@@ -296,11 +299,30 @@ trigger = wf.add(
     webhookId=uid("tg-trigger", wf.slug),
     credentials={"telegramApi": {"id": "tgBotCredential01", "name": "Telegram bot"}},
 )
+settings = wf.add(
+    "Settings",
+    "n8n-nodes-base.set",
+    3.4,
+    (200, 0),
+    {
+        "assignments": {
+            "assignments": [
+                {"id": uid("set1", wf.slug), "name": "model", "value": "nano-banana-pro", "type": "string"},
+                {"id": uid("set2", wf.slug), "name": "aspect_ratio", "value": "1:1", "type": "string"},
+                {"id": uid("set3", wf.slug), "name": "resolution", "value": "2K", "type": "string"},
+                {"id": uid("set4", wf.slug), "name": "caption",
+                 "value": "Made with Nano Banana Pro on getmegabrain.com", "type": "string"},
+            ]
+        },
+        "includeOtherFields": True,
+        "options": {},
+    },
+)
 typing = wf.add(
     "Show 'sending photo'",
     "n8n-nodes-base.telegram",
     1.2,
-    (220, 0),
+    (420, 0),
     {
         "operation": "sendChatAction",
         "chatId": "={{ $json.message.chat.id }}",
@@ -313,11 +335,12 @@ gen = wf.add(
     "Generate image (Nano Banana Pro)",
     "n8n-nodes-base.httpRequest",
     4.2,
-    (440, 0),
+    (640, 0),
     http_post(
         "/images/generations",
-        "={{ JSON.stringify({ model: 'nano-banana-pro', prompt: $('Telegram Trigger').item.json.message.text, "
-        "aspect_ratio: '1:1', resolution: '2K', output_format: 'jpeg' }) }}",
+        "={{ JSON.stringify({ model: $('Settings').item.json.model, prompt: $('Telegram Trigger').item.json.message.text, "
+        "aspect_ratio: $('Settings').item.json.aspect_ratio, resolution: $('Settings').item.json.resolution, "
+        "output_format: 'jpeg' }) }}",
     ),
     credentials=CRED,
     onError="continueErrorOutput",
@@ -326,12 +349,12 @@ send = wf.add(
     "Send photo",
     "n8n-nodes-base.telegram",
     1.2,
-    (1140, -100),
+    (1340, -100),
     {
         "operation": "sendPhoto",
         "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
         "file": "={{ $json.image_url }}",
-        "additionalFields": {"caption": "Made with Nano Banana Pro on getmegabrain.com"},
+        "additionalFields": {"caption": "={{ $('Settings').item.json.caption }}"},
     },
     webhookId=uid("tg-photo", wf.slug),
     credentials={"telegramApi": {"id": "tgBotCredential01", "name": "Telegram bot"}},
@@ -340,7 +363,7 @@ err = wf.add(
     "Tell the user it failed",
     "n8n-nodes-base.telegram",
     1.2,
-    (1140, 260),
+    (1340, 260),
     {
         "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
         "text": "=Could not make the image: {{ $json.error?.message || 'unknown error' }}",
@@ -349,10 +372,30 @@ err = wf.add(
     webhookId=uid("tg-error", wf.slug),
     credentials={"telegramApi": {"id": "tgBotCredential01", "name": "Telegram bot"}},
 )
-wf.link(trigger, typing)
 wf.link(typing, gen)
-image_url = add_image_wait(wf, gen, 660, 0, "Image", on_error=err)
+image_url = add_image_wait(wf, gen, 860, 0, "Image", on_error=err)
+wf.link(trigger, settings)
+wf.link(settings, typing)
 wf.link(image_url, send)
+wf.note(
+    "Note: settings",
+    (140, -260),
+    "## 1. Settings\nChange the model, frame and caption here. `resolution` 4K costs twice as much; "
+    "for cheaper drafts use `nano-banana-2` or `flux-2` (FLUX takes no `resolution`: remove it from the request).",
+    width=420,
+    height=220,
+    color=5,
+)
+wf.note(
+    "Note: queue",
+    (820, -260),
+    "## 2. Wait for a queued image\nThe API waits up to ~110 s. A slower image comes back as `202` with a "
+    "`response_url`: the loop waits 10 s and asks again until the image is ready. A failed job is refunded "
+    "and the user gets the reason.",
+    width=460,
+    height=220,
+    color=5,
+)
 wf.link(gen, err, out=1)
 templates.append(
     wf.write(
@@ -454,6 +497,24 @@ wf.link(form, writer)
 wf.link(writer, submit)
 add_poll_loop(wf, submit, 660, 0, "video", 15, link)
 wf.link(link, done)
+wf.note(
+    "Note: prompt",
+    (160, -260),
+    "## 1. Prompt and job\nThe free model `mb-auto/free` turns the idea into a Kling prompt (no charge). "
+    "The job is then submitted to the queue; its price is charged at submit and refunded if it fails.",
+    width=420,
+    height=220,
+    color=5,
+)
+wf.note(
+    "Note: poll",
+    (640, -300),
+    "## 2. Poll the job\nEvery 15 s the loop reads `status_url`. `COMPLETED` → fetch the video from "
+    "`response_url`; `FAILED` → stop with an error (the price is back on your balance); anything else → wait again.",
+    width=560,
+    height=180,
+    color=5,
+)
 templates.append(
     wf.write(
         "A form that turns a one-line idea into a Kling 3 video: a free LLM writes the prompt, the MegaBrain "
@@ -582,6 +643,24 @@ slide = wf.add(
 )
 wf.link(slide_url, slide)
 wf.link(slide, loop)
+wf.note(
+    "Note: plan",
+    (160, -260),
+    "## 1. Plan\nEdit **Topic**: subject, number of slides, visual style. The free model returns JSON with a "
+    "caption and one image prompt per slide; **Parse the plan** strips code fences and keeps the slide count.",
+    width=440,
+    height=220,
+    color=5,
+)
+wf.note(
+    "Note: draw",
+    (1040, -300),
+    "## 2. Draw slides one by one\nEach slide goes through FLUX 2 at 1080×1350. If an image is not ready in "
+    "~110 s the loop polls `response_url`. When all slides are done, **Carousel** returns the caption and the URLs.",
+    width=520,
+    height=200,
+    color=5,
+)
 templates.append(
     wf.write(
         "Plans an Instagram carousel with a free LLM, draws each slide with FLUX 2 at 1080×1350 through the "
@@ -708,6 +787,24 @@ ad_done = add_form_ending(
     "<p><video src=\"{{ $json.video_url }}\" controls style=\"max-width:100%\"></video></p>",
 )
 wf.link(out, ad_done)
+wf.note(
+    "Note: scene",
+    (160, -300),
+    "## 1. Scene\nThe free model writes two prompts as JSON: the lifestyle shot and a 5-second action. "
+    "The photo URL must be public (no login, no Google Drive preview links).",
+    width=420,
+    height=220,
+    color=5,
+)
+wf.note(
+    "Note: shot and video",
+    (840, -420),
+    "## 2. Shot, then video\n**Nano Banana Pro Edit** keeps the product and label from the photo. The shot "
+    "feeds **Kling 3 image-to-video**; the loop polls the job every 15 s and the form shows both links.",
+    width=560,
+    height=200,
+    color=5,
+)
 templates.append(
     wf.write(
         "UGC-style ad from one product photo: a free LLM writes the scene, Nano Banana Pro Edit makes a lifestyle "
