@@ -742,11 +742,15 @@ async function generateMedia(
 			encoding: 'arraybuffer',
 			returnFullResponse: true,
 		})) as { body: ArrayBuffer; headers: IDataObject };
-		const fileName = new URL(urls[0]).pathname.split('/').pop() || `${resource}`;
 		const mimeType =
 			typeof file.headers['content-type'] === 'string'
-				? (file.headers['content-type'] as string).split(';')[0]
+				? (file.headers['content-type'] as string).split(';')[0].trim()
 				: undefined;
+		// File URLs end in an index (…/media/files/<id>/0), so name the file after the job.
+		const extension = (mimeType?.split('/')[1] ?? (resource === 'video' ? 'mp4' : 'png'))
+			.replace('jpeg', 'jpg')
+			.replace('quicktime', 'mov');
+		const fileName = `${resource}-${String(job.request_id ?? 'result')}.${extension}`;
 		result.binary = {
 			[binaryPropertyName]: await this.helpers.prepareBinaryData(
 				Buffer.from(file.body),

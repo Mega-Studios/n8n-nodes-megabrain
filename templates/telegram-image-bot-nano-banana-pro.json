@@ -67,7 +67,7 @@
         "url": "https://getmegabrain.com/api/gateway/v1/images/generations",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ model: 'nano-banana-pro', prompt: $('Telegram Trigger').item.json.message.text, aspect_ratio: '1:1', resolution: '2K' }) }}",
+        "jsonBody": "={{ JSON.stringify({ model: 'nano-banana-pro', prompt: $('Telegram Trigger').item.json.message.text, aspect_ratio: '1:1', resolution: '2K', output_format: 'jpeg' }) }}",
         "options": {
           "timeout": 120000
         },

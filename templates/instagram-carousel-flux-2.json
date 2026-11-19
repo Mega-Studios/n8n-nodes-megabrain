@@ -94,7 +94,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const raw = $input.first().json.choices[0].message.content;\nconst text = raw.replace(/^```(?:json)?\\s*/i, '').replace(/```\\s*$/, '').trim();\nconst plan = JSON.parse(text);\nconst { style, slides } = $('Topic').first().json;\nreturn plan.slides.slice(0, slides).map((slide, index) => ({\n  json: { index: index + 1, title: slide.title, prompt: `${slide.prompt}. ${style}`, caption: plan.caption },\n}));"
+        "jsCode": "const raw = $input.first().json.choices[0].message.content;\nconst text = raw.replace(/^```(?:json)?\\s*/i, '').replace(/```\\s*$/, '').trim();\nconst plan = JSON.parse(text);\nconst { style, slides } = $('Topic').first().json;\nreturn plan.slides.slice(0, slides).map((slide, index) => ({\n  json: { index: index + 1, title: slide.title, prompt: `${slide.prompt.replace(/[.\\s]+$/, '')}. ${style}`, caption: plan.caption },\n}));"
       },
       "id": "f022780d-4e4b-538d-b69b-fe93cf66306a",
       "name": "Parse the plan",

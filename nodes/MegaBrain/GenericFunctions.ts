@@ -158,7 +158,8 @@ export function buildMediaInput(
 	if (fields.startImageUrl) {
 		if (takes('start_image_url')) body.start_image_url = fields.startImageUrl;
 		else if (takes('first_frame_url')) body.first_frame_url = fields.startImageUrl;
-		else if (takes('image_urls')) body.image_urls = [fields.startImageUrl];
+		else if (takes('image_urls') && !('image_urls' in body))
+			body.image_urls = [fields.startImageUrl];
 		else skipped.push('Start Image URL');
 	}
 	if (fields.endImageUrl) {

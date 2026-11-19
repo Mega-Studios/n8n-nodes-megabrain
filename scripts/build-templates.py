@@ -228,7 +228,7 @@ gen = wf.add(
     http_post(
         "/images/generations",
         "={{ JSON.stringify({ model: 'nano-banana-pro', prompt: $('Telegram Trigger').item.json.message.text, "
-        "aspect_ratio: '1:1', resolution: '2K' }) }}",
+        "aspect_ratio: '1:1', resolution: '2K', output_format: 'jpeg' }) }}",
     ),
     credentials=CRED,
     onError="continueErrorOutput",
@@ -422,7 +422,7 @@ parse = wf.add(
             "const plan = JSON.parse(text);\n"
             "const { style, slides } = $('Topic').first().json;\n"
             "return plan.slides.slice(0, slides).map((slide, index) => ({\n"
-            "  json: { index: index + 1, title: slide.title, prompt: `${slide.prompt}. ${style}`, caption: plan.caption },\n"
+            "  json: { index: index + 1, title: slide.title, prompt: `${slide.prompt.replace(/[.\s]+$/, '')}. ${style}`, caption: plan.caption },\n"
             "}));"
         )
     },
