@@ -103,3 +103,11 @@ The **OpenAI Chat Model** node points at MegaBrain's OpenAI-compatible API, so t
 1. Get a key at https://getmegabrain.com/keys.
 2. Create an **OpenAI** credential: API Key = your MegaBrain key, Base URL = `https://getmegabrain.com/api/gateway/v1`.
 3. Open the chat and talk. Pick another model in **MegaBrain model** (the list loads from the API). All models: https://getmegabrain.com/models
+
+---
+
+## Status on n8n.io (creator `sha367`, signed up 2026-11-19 with team@getmegabrain.com)
+
+- Submitted: **Generate Kling 3 videos from form ideas with MegaBrain** (workflow 23286), under human review (3–5 business days).
+- New creators can have one template in review at a time ("Share new template" is disabled meanwhile). Next, in this order: Telegram bot, Instagram carousel, product photo → video ad.
+- Not submitted: the AI agent template. It is a chat trigger + agent + model, which n8n's guidelines call a default chatbot.
