@@ -1,0 +1,19 @@
+name: npm auth check
+on: workflow_dispatch
+jobs:
+  whoami:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 'lts/*'
+      - run: |
+          npm --version
+          npm config set //registry.npmjs.org/:_authToken "$NPM_TOKEN"
+          echo "token length: ${#NPM_TOKEN}, prefix: ${NPM_TOKEN:0:4}"
+          npm whoami || true
+          npm access list packages 2>&1 | head -5 || true
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
