@@ -174,6 +174,95 @@ def add_poll_loop(wf, submit, x, y, label, wait_seconds, on_done):
     return result
 
 
+IMAGE_URL_EXPR = "$json.data?.[0]?.url ?? $json.images?.[0]?.url ?? ''"
+
+
+def add_image_wait(wf, image_node, x, y, label, on_error=None):
+    """/images/generations answers 202 with queue links when the image takes over ~110 s.
+
+    Ready → a Set node with `image_url`; queued → Wait 10 s → GET response_url → check again.
+    Returns the name of the Set node.
+    """
+    ready = wf.add(
+        f"{label} ready?",
+        "n8n-nodes-base.if",
+        2.2,
+        (x, y),
+        {
+            "conditions": {
+                "options": {"caseSensitive": True, "leftValue": "", "typeValidation": "loose", "version": 2},
+                "conditions": [
+                    {
+                        "id": uid(f"ready-{label}", wf.slug),
+                        "leftValue": "={{ " + IMAGE_URL_EXPR + " }}",
+                        "rightValue": "",
+                        "operator": {"type": "string", "operation": "notEmpty", "singleValue": True},
+                    }
+                ],
+                "combinator": "and",
+            },
+            "options": {},
+        },
+    )
+    url = wf.add(
+        f"{label} URL",
+        "n8n-nodes-base.set",
+        3.4,
+        (x + 220, y - 100),
+        {
+            "assignments": {
+                "assignments": [
+                    {"id": uid(f"url-{label}", wf.slug), "name": "image_url",
+                     "value": "={{ " + IMAGE_URL_EXPR + " }}", "type": "string"},
+                ]
+            },
+            "options": {},
+        },
+    )
+    wait = wf.add(
+        f"Queued: wait 10s ({label})",
+        "n8n-nodes-base.wait",
+        1.1,
+        (x + 220, y + 120),
+        {"amount": 10},
+        webhookId=uid(f"wait-img-{label}", wf.slug),
+    )
+    extra = {"onError": "continueErrorOutput"} if on_error else {}
+    fetch = wf.add(
+        f"Fetch queued {label.lower()}",
+        "n8n-nodes-base.httpRequest",
+        4.2,
+        (x + 440, y + 120),
+        http_get("={{ $json.response_url }}"),
+        credentials=CRED,
+        **extra,
+    )
+    wf.link(image_node, ready)
+    wf.link(ready, url, out=0)
+    wf.link(ready, wait, out=1)
+    wf.link(wait, fetch)
+    wf.link(fetch, ready)
+    if on_error:
+        wf.link(fetch, on_error, out=1)
+    return url
+
+
+def add_form_ending(wf, name, pos, html):
+    return wf.add(
+        name,
+        "n8n-nodes-base.form",
+        2.3,
+        pos,
+        {
+            "operation": "completion",
+            "respondWith": "showText",
+            "responseText": "=<div style=\"font-family:system-ui,-apple-system,sans-serif;max-width:640px;"
+            "margin:48px auto;padding:24px;line-height:1.5\">" + html.lstrip("=") + "</div>",
+        },
+        webhookId=uid(f"form-end-{name}", wf.slug),
+    )
+
+
 SETUP = (
     "## Setup (2 minutes)\n"
     "1. Get a key at [getmegabrain.com/keys](https://getmegabrain.com/keys).\n"
@@ -237,11 +326,11 @@ send = wf.add(
     "Send photo",
     "n8n-nodes-base.telegram",
     1.2,
-    (700, -100),
+    (1140, -100),
     {
         "operation": "sendPhoto",
         "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
-        "file": "={{ $json.data[0].url }}",
+        "file": "={{ $json.image_url }}",
         "additionalFields": {"caption": "Made with Nano Banana Pro on getmegabrain.com"},
     },
     webhookId=uid("tg-photo", wf.slug),
@@ -251,7 +340,7 @@ err = wf.add(
     "Tell the user it failed",
     "n8n-nodes-base.telegram",
     1.2,
-    (700, 100),
+    (1140, 260),
     {
         "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
         "text": "=Could not make the image: {{ $json.error?.message || 'unknown error' }}",
@@ -262,7 +351,8 @@ err = wf.add(
 )
 wf.link(trigger, typing)
 wf.link(typing, gen)
-wf.link(gen, send, out=0)
+image_url = add_image_wait(wf, gen, 660, 0, "Image", on_error=err)
+wf.link(image_url, send)
 wf.link(gen, err, out=1)
 templates.append(
     wf.write(
@@ -303,7 +393,6 @@ form = wf.add(
                  "fieldOptions": {"values": [{"option": "no"}, {"option": "yes"}]}, "requiredField": True},
             ]
         },
-        "responseMode": "lastNode",
         "options": {},
     },
     webhookId=uid("form", wf.slug),
@@ -353,9 +442,18 @@ link = wf.add(
         "options": {},
     },
 )
+done = add_form_ending(
+    wf,
+    "Show the video",
+    (1800, -120),
+    "=<h2>Your video is ready</h2><p><a href=\"{{ $json.video_url }}\" target=\"_blank\">Open the video</a></p>"
+    "<p><video src=\"{{ $json.video_url }}\" controls style=\"max-width:100%\"></video></p>"
+    "<p>Prompt: {{ $json.prompt }}</p>",
+)
 wf.link(form, writer)
 wf.link(writer, submit)
 add_poll_loop(wf, submit, 660, 0, "video", 15, link)
+wf.link(link, done)
 templates.append(
     wf.write(
         "A form that turns a one-line idea into a Kling 3 video: a free LLM writes the prompt, the MegaBrain "
@@ -427,11 +525,18 @@ parse = wf.add(
         )
     },
 )
+loop = wf.add(
+    "One slide at a time",
+    "n8n-nodes-base.splitInBatches",
+    3,
+    (860, 0),
+    {"options": {}},
+)
 draw = wf.add(
     "Draw slide (FLUX 2)",
     "n8n-nodes-base.httpRequest",
     4.2,
-    (860, 0),
+    (1080, 100),
     http_post(
         "/images/generations",
         "={{ JSON.stringify({ model: 'flux-2', prompt: $json.prompt, image_size: { width: 1080, height: 1350 } }) }}",
@@ -442,21 +547,41 @@ collect = wf.add(
     "Carousel",
     "n8n-nodes-base.code",
     2,
-    (1080, 0),
+    (1080, -140),
     {
         "jsCode": (
-            "const slides = $('Parse the plan').all();\n"
-            "const images = $input.all().map((item, i) => ({\n"
-            "  slide: slides[i].json.index,\n"
-            "  title: slides[i].json.title,\n"
-            "  url: item.json.data[0].url,\n"
-            "}));\n"
-            "return [{ json: { caption: slides[0].json.caption, images } }];"
+            "const slides = $input.all().map((item) => item.json);\n"
+            "return [{ json: {\n"
+            "  caption: slides[0]?.caption,\n"
+            "  images: slides.map(({ index, title, image_url }) => ({ slide: index, title, url: image_url })),\n"
+            "} }];"
         )
     },
 )
-for a, b in [(start, topic), (topic, plan), (plan, parse), (parse, draw), (draw, collect)]:
+for a, b in [(start, topic), (topic, plan), (plan, parse), (parse, loop)]:
     wf.link(a, b)
+wf.link(loop, collect, out=0)
+wf.link(loop, draw, out=1)
+slide_url = add_image_wait(wf, draw, 1300, 100, "Slide")
+slide = wf.add(
+    "Slide",
+    "n8n-nodes-base.set",
+    3.4,
+    (1740, 0),
+    {
+        "assignments": {
+            "assignments": [
+                {"id": uid("s1", wf.slug), "name": "index", "value": "={{ $('One slide at a time').first().json.index }}", "type": "number"},
+                {"id": uid("s2", wf.slug), "name": "title", "value": "={{ $('One slide at a time').first().json.title }}", "type": "string"},
+                {"id": uid("s3", wf.slug), "name": "caption", "value": "={{ $('One slide at a time').first().json.caption }}", "type": "string"},
+                {"id": uid("s4", wf.slug), "name": "image_url", "value": "={{ $json.image_url }}", "type": "string"},
+            ]
+        },
+        "options": {},
+    },
+)
+wf.link(slide_url, slide)
+wf.link(slide, loop)
 templates.append(
     wf.write(
         "Plans an Instagram carousel with a free LLM, draws each slide with FLUX 2 at 1080×1350 through the "
@@ -495,7 +620,6 @@ form = wf.add(
                 {"fieldLabel": "Audience", "placeholder": "busy students"},
             ]
         },
-        "responseMode": "lastNode",
         "options": {},
     },
     webhookId=uid("form", wf.slug),
@@ -546,10 +670,10 @@ submit = wf.add(
     "Submit Kling 3 image-to-video",
     "n8n-nodes-base.httpRequest",
     4.2,
-    (880, 0),
+    (1320, -100),
     http_post(
         "/queue/kling-video/v3/standard/image-to-video",
-        "={{ JSON.stringify({ prompt: $('Parse the scene').item.json.video_prompt, start_image_url: $json.data[0].url, "
+        "={{ JSON.stringify({ prompt: $('Parse the scene').item.json.video_prompt, start_image_url: $json.image_url, "
         "duration: '5', generate_audio: false }) }}",
     ),
     credentials=CRED,
@@ -558,21 +682,32 @@ out = wf.add(
     "Ad links",
     "n8n-nodes-base.set",
     3.4,
-    (2020, -120),
+    (2460, -220),
     {
         "assignments": {
             "assignments": [
                 {"id": uid("o1", wf.slug), "name": "video_url", "value": "={{ $json.video.url }}", "type": "string"},
                 {"id": uid("o2", wf.slug), "name": "image_url",
-                 "value": "={{ $('Lifestyle shot (Nano Banana Pro Edit)').item.json.data[0].url }}", "type": "string"},
+                 "value": "={{ $('Shot URL').item.json.image_url }}", "type": "string"},
             ]
         },
         "options": {},
     },
 )
-for a, b in [(form, scene), (scene, parse), (parse, shot), (shot, submit)]:
+for a, b in [(form, scene), (scene, parse), (parse, shot)]:
     wf.link(a, b)
-add_poll_loop(wf, submit, 1100, 0, "video", 15, out)
+shot_url = add_image_wait(wf, shot, 880, 0, "Shot")
+wf.link(shot_url, submit)
+add_poll_loop(wf, submit, 1540, -100, "video", 15, out)
+ad_done = add_form_ending(
+    wf,
+    "Show the ad",
+    (2680, -220),
+    "=<h2>Your ad is ready</h2><p><a href=\"{{ $json.video_url }}\" target=\"_blank\">Open the video</a> · "
+    "<a href=\"{{ $json.image_url }}\" target=\"_blank\">Open the image</a></p>"
+    "<p><video src=\"{{ $json.video_url }}\" controls style=\"max-width:100%\"></video></p>",
+)
+wf.link(out, ad_done)
 templates.append(
     wf.write(
         "UGC-style ad from one product photo: a free LLM writes the scene, Nano Banana Pro Edit makes a lifestyle "

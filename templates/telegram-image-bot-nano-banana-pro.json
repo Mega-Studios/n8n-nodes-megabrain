@@ -94,7 +94,7 @@
       "parameters": {
         "operation": "sendPhoto",
         "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
-        "file": "={{ $json.data[0].url }}",
+        "file": "={{ $json.image_url }}",
         "additionalFields": {
           "caption": "Made with Nano Banana Pro on getmegabrain.com"
         }
@@ -104,7 +104,7 @@
       "type": "n8n-nodes-base.telegram",
       "typeVersion": 1.2,
       "position": [
-        700,
+        1140,
         -100
       ],
       "webhookId": "a337eea7-16f6-5178-91a2-4c8b464d2f37",
@@ -128,8 +128,8 @@
       "type": "n8n-nodes-base.telegram",
       "typeVersion": 1.2,
       "position": [
-        700,
-        100
+        1140,
+        260
       ],
       "webhookId": "f064e378-94fb-53c3-a3cc-ee0ca900d3f5",
       "credentials": {
@@ -138,6 +138,102 @@
           "name": "Telegram bot"
         }
       }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "271316d1-2b33-5578-89be-35ccaa6f1bf8",
+              "leftValue": "={{ $json.data?.[0]?.url ?? $json.images?.[0]?.url ?? '' }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "5fc9dee3-4485-59cb-988a-0928312bd58e",
+      "name": "Image ready?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        660,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "9d5543bb-93ed-5a03-8d04-6e884861ff08",
+              "name": "image_url",
+              "value": "={{ $json.data?.[0]?.url ?? $json.images?.[0]?.url ?? '' }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "800c87a0-1ca7-5a17-8e97-74e2b0f0bab2",
+      "name": "Image URL",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        880,
+        -100
+      ]
+    },
+    {
+      "parameters": {
+        "amount": 10
+      },
+      "id": "9e314536-317d-538b-88f0-a881e1544752",
+      "name": "Queued: wait 10s (Image)",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        880,
+        120
+      ],
+      "webhookId": "9c030a1e-766c-5a85-a23f-0cc442644072"
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.response_url }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "id": "eee7ecfc-ff10-53e4-a709-2edb4c0ecf57",
+      "name": "Fetch queued image",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1100,
+        120
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "mbHeaderAuth0001",
+          "name": "MegaBrain API key"
+        }
+      },
+      "onError": "continueErrorOutput"
     }
   ],
   "connections": {
@@ -167,7 +263,7 @@
       "main": [
         [
           {
-            "node": "Send photo",
+            "node": "Image ready?",
             "type": "main",
             "index": 0
           }
@@ -175,6 +271,64 @@
         [
           {
             "node": "Tell the user it failed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Image ready?": {
+      "main": [
+        [
+          {
+            "node": "Image URL",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Queued: wait 10s (Image)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Queued: wait 10s (Image)": {
+      "main": [
+        [
+          {
+            "node": "Fetch queued image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch queued image": {
+      "main": [
+        [
+          {
+            "node": "Image ready?",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Tell the user it failed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Image URL": {
+      "main": [
+        [
+          {
+            "node": "Send photo",
             "type": "main",
             "index": 0
           }

@@ -63,7 +63,6 @@
             }
           ]
         },
-        "responseMode": "lastNode",
         "options": {}
       },
       "id": "efd9fe00-2db1-57b2-81e6-cc8267484683",
@@ -162,6 +161,22 @@
         1580,
         -120
       ]
+    },
+    {
+      "parameters": {
+        "operation": "completion",
+        "respondWith": "showText",
+        "responseText": "=<div style=\"font-family:system-ui,-apple-system,sans-serif;max-width:640px;margin:48px auto;padding:24px;line-height:1.5\"><h2>Your video is ready</h2><p><a href=\"{{ $json.video_url }}\" target=\"_blank\">Open the video</a></p><p><video src=\"{{ $json.video_url }}\" controls style=\"max-width:100%\"></video></p><p>Prompt: {{ $json.prompt }}</p></div>"
+      },
+      "id": "1571aacb-8059-50dc-aa07-9f7b56f524cf",
+      "name": "Show the video",
+      "type": "n8n-nodes-base.form",
+      "typeVersion": 2.3,
+      "position": [
+        1800,
+        -120
+      ],
+      "webhookId": "0ae8ef1f-dcac-5a98-b4f2-f11ce22b1d3d"
     },
     {
       "parameters": {
@@ -391,6 +406,17 @@
         [
           {
             "node": "Video link",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Video link": {
+      "main": [
+        [
+          {
+            "node": "Show the video",
             "type": "main",
             "index": 0
           }

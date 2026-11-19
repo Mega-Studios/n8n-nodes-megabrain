@@ -38,7 +38,6 @@
             }
           ]
         },
-        "responseMode": "lastNode",
         "options": {}
       },
       "id": "dade61fb-aff4-535d-9165-bb44b99a41eb",
@@ -128,7 +127,7 @@
         "url": "https://getmegabrain.com/api/gateway/v1/queue/kling-video/v3/standard/image-to-video",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ prompt: $('Parse the scene').item.json.video_prompt, start_image_url: $json.data[0].url, duration: '5', generate_audio: false }) }}",
+        "jsonBody": "={{ JSON.stringify({ prompt: $('Parse the scene').item.json.video_prompt, start_image_url: $json.image_url, duration: '5', generate_audio: false }) }}",
         "options": {
           "timeout": 120000
         },
@@ -140,8 +139,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        880,
-        0
+        1320,
+        -100
       ],
       "credentials": {
         "httpHeaderAuth": {
@@ -163,7 +162,7 @@
             {
               "id": "b941d3d0-0da1-5331-b381-b0e0323bb422",
               "name": "image_url",
-              "value": "={{ $('Lifestyle shot (Nano Banana Pro Edit)').item.json.data[0].url }}",
+              "value": "={{ $('Shot URL').item.json.image_url }}",
               "type": "string"
             }
           ]
@@ -175,9 +174,104 @@
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        2020,
-        -120
+        2460,
+        -220
       ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "9ae1d9fd-6c22-51e2-975d-0c8d82f7a1aa",
+              "leftValue": "={{ $json.data?.[0]?.url ?? $json.images?.[0]?.url ?? '' }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "db4ab9a2-7bdf-5b09-850e-aab94376ec66",
+      "name": "Shot ready?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        880,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "5b80f4e9-66e5-5892-b040-dc92b412ef1b",
+              "name": "image_url",
+              "value": "={{ $json.data?.[0]?.url ?? $json.images?.[0]?.url ?? '' }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "31f3ccde-af5a-5e4d-832a-faf76c038da9",
+      "name": "Shot URL",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1100,
+        -100
+      ]
+    },
+    {
+      "parameters": {
+        "amount": 10
+      },
+      "id": "ca40ceda-1fb4-5bf1-aecb-e9b907d01f7b",
+      "name": "Queued: wait 10s (Shot)",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        1100,
+        120
+      ],
+      "webhookId": "31caa5c6-1fea-5f5f-b75b-f18af39c4e87"
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.response_url }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "id": "78a37de4-9a8e-5823-9ecc-3d7313dbf9e1",
+      "name": "Fetch queued shot",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1320,
+        120
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "mbHeaderAuth0001",
+          "name": "MegaBrain API key"
+        }
+      }
     },
     {
       "parameters": {
@@ -188,8 +282,8 @@
       "type": "n8n-nodes-base.wait",
       "typeVersion": 1.1,
       "position": [
-        1100,
-        0
+        1540,
+        -100
       ],
       "webhookId": "4e7d4fe9-a220-5602-84a0-4ef5a4bb7196"
     },
@@ -207,8 +301,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        1320,
-        0
+        1760,
+        -100
       ],
       "credentials": {
         "httpHeaderAuth": {
@@ -279,8 +373,8 @@
       "type": "n8n-nodes-base.switch",
       "typeVersion": 3.2,
       "position": [
-        1540,
-        0
+        1980,
+        -100
       ]
     },
     {
@@ -297,8 +391,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        1800,
-        -120
+        2240,
+        -220
       ],
       "credentials": {
         "httpHeaderAuth": {
@@ -316,9 +410,25 @@
       "type": "n8n-nodes-base.stopAndError",
       "typeVersion": 1,
       "position": [
-        1800,
-        60
+        2240,
+        -40
       ]
+    },
+    {
+      "parameters": {
+        "operation": "completion",
+        "respondWith": "showText",
+        "responseText": "=<div style=\"font-family:system-ui,-apple-system,sans-serif;max-width:640px;margin:48px auto;padding:24px;line-height:1.5\"><h2>Your ad is ready</h2><p><a href=\"{{ $json.video_url }}\" target=\"_blank\">Open the video</a> · <a href=\"{{ $json.image_url }}\" target=\"_blank\">Open the image</a></p><p><video src=\"{{ $json.video_url }}\" controls style=\"max-width:100%\"></video></p></div>"
+      },
+      "id": "a2b5d1f4-9155-5233-b043-17d524197737",
+      "name": "Show the ad",
+      "type": "n8n-nodes-base.form",
+      "typeVersion": 2.3,
+      "position": [
+        2680,
+        -220
+      ],
+      "webhookId": "04e2eba3-66b8-5d1b-af9a-049c1dce56b6"
     }
   ],
   "connections": {
@@ -356,6 +466,57 @@
       ]
     },
     "Lifestyle shot (Nano Banana Pro Edit)": {
+      "main": [
+        [
+          {
+            "node": "Shot ready?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Shot ready?": {
+      "main": [
+        [
+          {
+            "node": "Shot URL",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Queued: wait 10s (Shot)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Queued: wait 10s (Shot)": {
+      "main": [
+        [
+          {
+            "node": "Fetch queued shot",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch queued shot": {
+      "main": [
+        [
+          {
+            "node": "Shot ready?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Shot URL": {
       "main": [
         [
           {
@@ -429,6 +590,17 @@
         [
           {
             "node": "Ad links",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ad links": {
+      "main": [
+        [
+          {
+            "node": "Show the ad",
             "type": "main",
             "index": 0
           }
